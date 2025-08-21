@@ -1,0 +1,42 @@
+FROM php:8.2.20-fpm
+
+# Sistem bağımlılıkları
+RUN apt-get update -y && apt-get install -y \
+    mariadb-client \
+    zip \
+    unzip \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    cron \
+    supervisor \
+    vim \
+    procps \
+    libgmp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Xdebug kurulumu
+RUN pecl install xdebug && docker-php-ext-enable xdebug
+
+# PHP extension’lar
+RUN docker-php-ext-install exif pdo pdo_mysql zip gmp
+
+# GD extension (PHP 8.2 için doğru configure flag’leri)
+RUN docker-php-ext-configure gd \
+    --with-freetype=/usr/include \
+    --with-jpeg=/usr/include \
+    && docker-php-ext-install gd
+
+# Cron Scheduler
+COPY ./.docker/supervisor/crons /etc/cron.d/
+RUN chmod 0644 /etc/cron.d/*
+
+# Worker Scheduler
+COPY ./.docker/supervisor/supervisord.conf /etc/supervisor/conf.d/
+
+# PHP upload.ini
+ADD ./.docker/upload.ini /usr/local/etc/php/conf.d/upload.ini
+
+WORKDIR /var/www
+

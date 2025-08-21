@@ -1,0 +1,6 @@
+FROM nginx:1.26-alpine
+
+# Nginx config kopyala
+COPY ./.docker/vhost.conf /etc/nginx/conf.d/default.conf
+
+WORKDIR /var/www
