@@ -1,5 +1,6 @@
 <?php
 
+use App\Helpers\ResponseBuilder;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,11 +21,28 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ]);
-
+        
         // CORS yapılandırması
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
 
     })
+    
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
-    })->create();
+        if (request()->expectsJson() || request()->is('api/*')) {
+            $exceptions->render(function (Throwable $e) {
+                $firstError = collect($e->errors())->flatten()->first();
+
+                return response()->json([
+                    'meta' => [
+                        'status' => false,
+                        'code' => 422,
+                        'message' => 'VALIDATION_ERROR',
+                    ],
+                    'data' => null,
+                    'error' => $firstError,
+                ], 422);
+            });
+        }
+        
+    }) 
+    ->create();
