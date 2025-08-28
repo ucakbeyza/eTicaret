@@ -7,6 +7,7 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
@@ -43,6 +44,14 @@ class AuthController extends Controller
             'user' => $user,
             'token' => $token
         ], "Login successful", 200);
+    }
+    public function me(Request $request){
+        $user = $request->user(); 
+
+        return ResponseBuilder::success([
+            'name' => $user->name,
+            'email' => $user->email,
+        ],"OK", 200);
     }
     
 }
