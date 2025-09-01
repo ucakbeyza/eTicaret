@@ -5,14 +5,14 @@ namespace App\Http\Controllers;
 use App\Helpers\ResponseBuilder;
 use App\Models\Address;
 use Illuminate\Http\Request;
+use App\Http\Requests\CreateAddressRequest;
+use App\Http\Requests\DeleteAddressRequest;
+use App\Http\Requests\UpdateAddressRequest;
 
 class AddressController extends Controller
 {
-    public function create(Request $request)
+    public function create(CreateAddressRequest $request)
     {
-        
-        
-
         $address = Address::create([
             'user_id' => $request->user()->id,
             'province' => $request->province,
@@ -21,7 +21,7 @@ class AddressController extends Controller
         ]);
         return ResponseBuilder::success($address);
     }
-    public function update(Request $request){
+    public function update(UpdateAddressRequest $request){
     
         
         $address = Address::where('id',$request->id)
@@ -35,7 +35,7 @@ class AddressController extends Controller
         ]);
         return ResponseBuilder::success($address);
     }
-    public function delete(Request $request){
+    public function delete(DeleteAddressRequest $request){
         
         $address = Address::where('id',$request->id)
             ->where('user_id', $request->user()->id)
