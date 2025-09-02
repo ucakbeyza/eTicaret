@@ -16,7 +16,7 @@ class ProductController extends Controller
         return ResponseBuilder::success([
             'products' => $products->items(), 
             'pagination' => [
-                'page' => $products->currentPAge(),
+                'page' => $products->currentPage(),
                 'per_page' => $products->perPage(),
                 'total' => $products->total(),
             ]
@@ -43,14 +43,41 @@ class ProductController extends Controller
 
     public function create(CreateProductRequest $request)
     {
-        $product = Product::create($request->validated());
+        $product = Product::create([
+            'name' => $request->name,
+            'slug' => $request->slug,
+            'description' => $request->description,
+            'price' => $request->price,
+            'currency' => $request->currency,
+            'stock' => $request->stock,
+            'sku' => $request->sku,
+            'brand' => $request->brand,
+            'category_id' => $request->category_id,
+            'attributes' => $request->attributes,
+            'images' => $request->images,
+            'status' => $request->status,
+        ]);
         return ResponseBuilder::success($product);
     }
 
     public function update(UpdateProductRequest $request)
     {
         $product = Product::findOrFail($request->id);
-        $product->update($request->validated());
+
+        $product->update([
+            'name' => $request->name,
+            'slug' => $request->slug,
+            'description' => $request->description,
+            'price' => $request->price,
+            'currency' => $request->currency,
+            'stock' => $request->stock,
+            'sku' => $request->sku,
+            'brand' => $request->brand,
+            'category_id' => $request->category_id,
+            'attributes' => $request->attributes,
+            'images' => $request->images,
+            'status' => $request->status,
+        ]);
         return ResponseBuilder::success($product);
     }
 
