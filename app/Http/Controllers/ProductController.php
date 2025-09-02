@@ -43,14 +43,40 @@ class ProductController extends Controller
 
     public function create(CreateProductRequest $request)
     {
-        $product = Product::create($request->validated());
+        $product = Product::create([
+            'name' => 'required|string|min:3',
+            'slug' => 'required|string|unique:products,slug',
+            'description' => 'required|string|min:20',
+            'price' => 'required|numeric',
+            'currency' => 'required|string',
+            'stock' => 'required|integer',
+            'sku' => 'required|string',
+            'brand' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
+            'attributes' => 'nullable|array',
+            'images' => 'nullable|array',
+            'status' => 'required|string',
+        ]);
         return ResponseBuilder::success($product);
     }
 
     public function update(UpdateProductRequest $request)
     {
         $product = Product::findOrFail($request->id);
-        $product->update($request->validated());
+        $product->update([
+            'name' => 'required|string|min:3',
+            'slug' => 'required|string|unique:products,slug',
+            'description' => 'required|string|min:20',
+            'price' => 'required|numeric',
+            'currency' => 'required|string',
+            'stock' => 'required|integer',
+            'sku' => 'required|string',
+            'brand' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
+            'attributes' => 'nullable|array',
+            'images' => 'nullable|array',
+            'status' => 'required|string',
+        ]);
         return ResponseBuilder::success($product);
     }
 
@@ -58,6 +84,6 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($request->id);
         $product->delete();
-        return ResponseBuilder::success(null);
+        return ResponseBuilder::success($product);
     }
 }
