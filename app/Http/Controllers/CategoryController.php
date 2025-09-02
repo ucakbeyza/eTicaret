@@ -42,8 +42,17 @@ class CategoryController extends Controller
         ]);
         return ResponseBuilder::success($category);
     }
-    public function delete(DeleteCategoryRequest $request){
-        $category = Category::where('id',$request->id)->firstOrFail();
+    public function delete(DeleteCategoryRequest $request)
+    {
+        $category = Category::findOrFail($request->id);
+        if($category->products()->count() > 0)
+        {
+            return ResponseBuilder::error(
+                [],
+                'Bu kategoriyle ilişkili ürünler mevcut. Lütfen tüm ürünleri silin veya başka kategori ile ilişkilendirin.',
+                400
+            );
+        }
 
         $category->delete();
 
