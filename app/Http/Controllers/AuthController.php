@@ -8,6 +8,7 @@ use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use App\Http\Resources\AuthResource;    
 
 class AuthController extends Controller
 {
@@ -21,7 +22,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->password)//Şifre plain text saklanmaz(hashlenir)
         ]);
         //Başarılı cevap döner
-        return ResponseBuilder::success($user, "User registered successfully", 201);
+        return ResponseBuilder::success(new AuthResource($user), "User registered successfully", 201);
     }
     public function login(LoginRequest $request){
 
@@ -29,7 +30,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
         //Kullanıcı yoksa veya şifre uyuşmuyorsa hata döner
         if(!$user || !Hash::check($request->password, $user->password)){
-            return ResponseBuilder::error(
+            return ResponseBuilder::error(new AuthResource($user),
                 [],
                 "INVALID_CREDENTIALS",
                 401
@@ -40,18 +41,12 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         //Başarılı cevap döner
-        return ResponseBuilder::success([
-            'user' => $user,
-            'token' => $token
-        ], "Login successful", 200);
+        return ResponseBuilder::success(new AuthResource($user), "Login successful", 200);
     }
     public function me(Request $request){
         $user = $request->user(); 
 
-        return ResponseBuilder::success([
-            'name' => $user->name,
-            'email' => $user->email,
-        ],"OK", 200);
+        return ResponseBuilder::success(new AuthResource($user), "OK", 200);
     }
     
 }
