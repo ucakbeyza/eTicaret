@@ -28,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     
     ->withExceptions(function (Exceptions $exceptions): void {
-        if (request()->expectsJson() || request()->is('api/*')) {
+        /*if (request()->expectsJson() || request()->is('api/*')) {
             $exceptions->render(function (Throwable $e) {
                 $firstError = collect($e->errors())->flatten()->first();
 
@@ -42,7 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     'error' => $firstError,
                 ], 422);
             });
-        }
+        }*/
         
     }) 
     ->create();
