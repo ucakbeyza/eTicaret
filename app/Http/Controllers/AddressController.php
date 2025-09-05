@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\CreateAddressRequest;
 use App\Http\Requests\DeleteAddressRequest;
 use App\Http\Requests\UpdateAddressRequest;
+use App\Http\Resources\AddressResource;
 
 class AddressController extends Controller
 {
@@ -19,7 +20,7 @@ class AddressController extends Controller
             'district' => $request->district,
             'address' => $request->address,
         ]);
-        return ResponseBuilder::success($address);
+        return ResponseBuilder::success(new AddressResource($address));
     }
     public function update(UpdateAddressRequest $request){
     
@@ -33,7 +34,7 @@ class AddressController extends Controller
             'district' => $request->district,
             'address' => $request->address,
         ]);
-        return ResponseBuilder::success($address);
+        return ResponseBuilder::success(new AddressResource($address));
     }
     public function delete(DeleteAddressRequest $request){
         
@@ -47,7 +48,7 @@ class AddressController extends Controller
     }
     public function list(Request $request){
         $addresses = Address::where('user_id', $request->user()->id)->get();
-        return ResponseBuilder::success($addresses);
+        return ResponseBuilder::success(AddressResource::collection($addresses));
     }
 
 }
