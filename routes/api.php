@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CartController;
 
 Route::post('/register', [AuthController::class, 'register']);
 
@@ -29,6 +30,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/products/create', [ProductController::class, 'create']);
     Route::post('/products/update', [ProductController::class, 'update']);
     Route::post('/products/delete', [ProductController::class, 'delete']);
+
+    Route::post('/cart/add', [CartController::class, 'add']);
+    Route::post('/cart/update', [CartController::class, 'update']);
+    Route::post('/cart/delete', [CartController::class, 'delete']);
+    Route::get('/cart/list', [CartController::class, 'list']);
+    Route::post('/cart/clear', [CartController::class, 'clear']);
 });
 
 Route::get('/categories', [CategoryController::class, 'index']);
