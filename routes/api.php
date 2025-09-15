@@ -5,6 +5,8 @@ use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderItemController;
 
 Route::post('/register', [AuthController::class, 'register']);
 
@@ -37,6 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cart/list', [CartController::class, 'list']);
     Route::post('/cart/clear', [CartController::class, 'clear']);
     Route::post('/checkout',[CartController::class, 'checkout']);
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::get('/orders/{orderId}/items', [OrderItemController::class, 'index']);
 });
 
 Route::get('/categories', [CategoryController::class, 'index']);
