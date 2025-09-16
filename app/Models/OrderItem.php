@@ -20,4 +20,10 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+    public function getLineTotalAttribute()
+    {
+        $lineTotal = $this->quantity * $this->product_price_snapshot;
+        return round($lineTotal, 2);
+    }
+
 }
