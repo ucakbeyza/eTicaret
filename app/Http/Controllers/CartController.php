@@ -15,6 +15,7 @@ use App\Http\Requests\CheckoutRequest;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Jobs\SendPurchaseConfirmation;
 
 
 class CartController extends Controller
@@ -176,6 +177,8 @@ class CartController extends Controller
             Order::where('id', $order->id)->update(['status' => 'failed']);
             return ResponseBuilder::error(null, $e->getMessage(), 422);
         }
+
+        SendPurchaseConfirmation::dispatch($order);
 
         return ResponseBuilder::success([
             'orderId' => $orderNo,
