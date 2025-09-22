@@ -11,6 +11,9 @@ class OrderItem extends Model
         'product_id',
         'quantity',
         'price',
+        'product_name_snapshot',
+        'product_price_snapshot',
+        'line_total',
     ];
     public function order()
     {
@@ -20,10 +23,4 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
-    public function getLineTotalAttribute()
-    {
-        $lineTotal = $this->quantity * $this->product_price_snapshot;
-        return round($lineTotal, 2);
-    }
-
 }
