@@ -34,27 +34,19 @@ class SendHighCartTotalMails extends Command
         $this->info('High cart total mail command started.');
         $twoHoursAgo = Carbon::now()->subHours(2);
         $tenMinutesAgo = Carbon::now()->subHours(2)->subMinutes(10);
-        //sepetinde ürün olan kullanıcıların kontrolü
-        $users = DB::table('carts')
-            ->select('user_id')
-            ->where('created_at', '<=', $twoHoursAgo)
-            ->where('created_at', '>', $tenMinutesAgo)//saat kontrolü
+
+        $carts = Cart::with('product')
+            ->select('user_id', DB::raw('SUM(quantity * products.price) as total'))
+            ->join('products', 'carts.product_id', '=', 'products.id')
+            ->whereBetween('carts.created_at', [$twoHoursAgo, $tenMinutesAgo])
             ->groupBy('user_id')
+            ->having('total', '>=', 10000)
             ->get();
-        
-        foreach ($users as $userRow) {
-            $cartItems = Cart::with('product')
-                ->where('user_id', $userRow->user_id)
-                ->get();
-            $total = $cartItems->sum(function($item) {
-                return $item->quantity * $item->product->price;
-            });
-            if ($total >= 10000) {
-                $user = User::find($userRow->user_id);
-                if ($user) {
-                    // mail gider
-                    Mail::to($user->email)->send(new HighCartTotalMail($user, $total));
-                }
+
+        foreach ($carts as $cart) {
+            $user = User::find($cart->user_id);
+            if ($user) {
+                Mail::to($user->email)->send(new HighCartTotalMail($user, $cart->subtotal));
             }
         }
     }
