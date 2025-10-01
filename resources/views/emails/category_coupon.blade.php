@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Sepetinde Ürünler Kaldı</title>
+  <title>Kategori Kuponu</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -64,7 +64,7 @@
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <h1>Sepetinizde Ürünler Kaldı!</h1>
+      <h1>Kategori Kuponu</h1>
     </div>
 
     <!-- Content -->
