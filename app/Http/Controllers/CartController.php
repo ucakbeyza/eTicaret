@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Jobs\SendPurchaseConfirmation;
-
+use App\Models\Campaign;
 
 class CartController extends Controller
 {
@@ -99,6 +99,9 @@ class CartController extends Controller
         $isFirstOrder = $this->isFirstOrder($userId);
         $discount = ($isFirstOrder && $total >= 100) ? 100 : 0;
         $finalTotal = $total - $discount;
+        //kampanya indirimi
+        $campaignDiscount = $this->calculateCampaignDiscount($cartItems);
+        $finalTotal -= $campaignDiscount;
         $currency = $cartItems->first()->product->currency ?? 'TRY';
         
         //sipariş numarası oluşturma
@@ -116,11 +119,11 @@ class CartController extends Controller
         ];
 
         // Önce pending sipariş kaydı oluştur
-        $order = DB::transaction(function () use ($userId, $orderNo, $total, $currency) {
+        $order = DB::transaction(function () use ($userId, $orderNo, $currency, $finalTotal) {
             return Order::create([
                 'user_id' => $userId,
                 'order_no' => $orderNo,
-                'total_price' => $total,
+                'total_price' => $finalTotal,
                 'currency' => $currency,
                 'status' => 'pending',
             ]);
@@ -188,6 +191,10 @@ class CartController extends Controller
             'orderId' => $orderNo,
             'price' => $total,
             'currency' => $currency,
+            'discount' => $discount,
+            'campaign_discount' => $campaignDiscount,
+            'message' => $discount > 0 ? 'İlk alışverişinize özel 100 TL indirim uygulandı!' : null,
+            'campaign_message' => $campaignDiscount > 0 ? '2 Al 1 Öde kampanyası uygulandı!' : null
         ]);
     }
     
@@ -222,7 +229,9 @@ class CartController extends Controller
                 "items" => [],
                 "total_price" => 0,
                 "discount" => 0,
-                "currency" => "TRY"
+                "campaign_discount" => 0,
+                "currency" => "TRY",
+                "campaign_message" => null
             ], $message);
         }
         //ilk sipariş indirimi
@@ -230,11 +239,14 @@ class CartController extends Controller
         $isFirstOrder = $this->isFirstOrder($userId);
         $discount = ($isFirstOrder && $total >= 100) ? 100 : 0;
 
-        
+        //kampanya indirimi
+        $campaignDiscount = $this->calculateCampaignDiscount($cartItems);
+
         return ResponseBuilder::success([
             "items" => CartItemResource::collection($cartItems),
-            "total_price" => $this->calculateTotalPrice($cartItems) ?? 0,
+            "total_price" => $total - $discount - $campaignDiscount,
             "discount" => $discount,
+            "campaign_discount" => $campaignDiscount,
             "currency" => $cartItems->first()->product->currency ?? 'TRY',
             "message" => $isFirstOrder ? 'İlk siparişinize özel 100 birim indirim kazandınız!' : null
         ], $message);
@@ -242,6 +254,24 @@ class CartController extends Controller
     private function isFirstOrder($userId)
     {
         return !Order::where('user_id', $userId)->exists();
+    }
+    private function calculateCampaignDiscount($cartItems)
+    {
+        $discount = 0;
+
+        foreach ($cartItems as $item) {
+            //ürüne ait kampanya var mı
+            $campaign = Campaign::where('product_id', $item->product_id)
+            ->where('type', '2al1öde')
+            ->first();
+            if ($campaign) {
+                //kampanya varsa 2 al 1 öde indirimi uygula
+                $freeCount = intdiv($item->quantity, 2);
+                $discount += $freeCount * $item->product->price;
+            }
+        }
+
+        return $discount;
     }
 
 }
