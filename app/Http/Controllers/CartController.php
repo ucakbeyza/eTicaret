@@ -95,6 +95,10 @@ class CartController extends Controller
         }
 
         $total = $this->calculateTotalPrice($cartItems) ?? 0;
+        //ilk sipariş indirimi
+        $isFirstOrder = $this->isFirstOrder($userId);
+        $discount = ($isFirstOrder && $total >= 100) ? 100 : 0;
+        $finalTotal = $total - $discount;
         $currency = $cartItems->first()->product->currency ?? 'TRY';
         
         //sipariş numarası oluşturma
@@ -105,7 +109,7 @@ class CartController extends Controller
             'card_number' => $request->input('card_number'),
             'expiry_date' => $request->input('expiry_date'),
             'cvv' => $request->input('cvv'),
-            'amount' => $total,
+            'amount' => $finalTotal,
             'currency' => $currency,
             'order_id' => $orderNo,
             'description' => 'ürün satın alma',
@@ -194,18 +198,21 @@ class CartController extends Controller
 
         return $this->getUserCart($request->user()->id, 'Sepetiniz temizlendi');
     }
+    //kullanıcının sepetindeki ürünler
     private function getCartItems($userId)
     {
         return Cart::query()
             ->with(['product'])
             ->where('user_id', $userId)->get();
     }
+    //sepetteki ürünlerin toplam fiyatı
     private function calculateTotalPrice($cartItems)
     {
         return $cartItems->sum(function($item) {
             return $item->subtotal;
         });
     }
+    //sepete ekleme, silme, güncelleme sonrası sepeti döner
     private function getUserCart($userId, $message)
     {
         $cartItems = $this->getCartItems($userId);
@@ -214,15 +221,27 @@ class CartController extends Controller
             return ResponseBuilder::success([
                 "items" => [],
                 "total_price" => 0,
+                "discount" => 0,
                 "currency" => "TRY"
             ], $message);
         }
+        //ilk sipariş indirimi
+        $total = $this->calculateTotalPrice($cartItems) ?? 0;
+        $isFirstOrder = $this->isFirstOrder($userId);
+        $discount = ($isFirstOrder && $total >= 100) ? 100 : 0;
+
         
         return ResponseBuilder::success([
             "items" => CartItemResource::collection($cartItems),
             "total_price" => $this->calculateTotalPrice($cartItems) ?? 0,
+            "discount" => $discount,
             "currency" => $cartItems->first()->product->currency ?? 'TRY',
+            "message" => $isFirstOrder ? 'İlk siparişinize özel 100 birim indirim kazandınız!' : null
         ], $message);
+    }
+    private function isFirstOrder($userId)
+    {
+        return !Order::where('user_id', $userId)->exists();
     }
 
 }
