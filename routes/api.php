@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderItemController;
+use App\Http\Controllers\CityController;
 
 Route::post('/register', [AuthController::class, 'register']);
 
@@ -48,5 +49,5 @@ Route::get('/categories', [CategoryController::class, 'index']);
 
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
 
-
+Route::get('/cities', [CityController::class, 'index']);
 
