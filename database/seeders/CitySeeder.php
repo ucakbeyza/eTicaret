@@ -26,7 +26,9 @@ class CitySeeder extends Seeder
             'Bartın', 'Ardahan', 'Iğdır', 'Yalova', 'Karabük', 'Kilis', 'Osmaniye', 'Düzce'
         ];
         foreach ($cities as $city) {
-            City::create(['name' => $city]);
+            if (!City::where('name', $city)->exists()) {
+                City::create(['name' => $city]);
+            }
         }
 
     }

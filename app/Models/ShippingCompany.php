@@ -4,12 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class City extends Model
+class ShippingCompany extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = [
+        'name',
+        'base_price'
+    ];
 
     public function shippingExtras()
     {
         return $this->hasMany(ShippingExtra::class);
     }
+    
 }
