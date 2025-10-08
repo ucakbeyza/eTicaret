@@ -39,7 +39,7 @@ class AuthController extends Controller
 
         //Token oluşturma
         $token = $user->createToken('auth_token')->plainTextToken;
-
+        $user->token = $token; //Kullanıcıya token ekleme
         //Başarılı cevap döner
         return ResponseBuilder::success(new AuthResource($user), "Login successful", 200);
     }
