@@ -26,6 +26,9 @@ class CheckoutRequest extends FormRequest
             'card_number' => ['required','digits_between:13,19'],
             'expiry_date' => ['required','regex:/^\d{2}\/\d{2,4}$/'],
             'cvv' => ['required','digits_between:3,4'],
+            'shipping_company_id' => 'required|exists:shipping_companies,id',
+            'address' => 'required|string|max:500',
+            'city_id' => 'required|exists:cities,id',
         ];
     }
 

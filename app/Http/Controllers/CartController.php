@@ -17,6 +17,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Jobs\SendPurchaseConfirmation;
 use App\Models\Campaign;
+use App\Models\ShippingCompany;
 
 class CartController extends Controller
 {
@@ -29,16 +30,20 @@ class CartController extends Controller
         if($product->stock < $request->quantity) {
             return ResponseBuilder::error(null,'Stokta yeterli ürün yok');
         }
-        //yeni cart kaydı için
-        $cart = Cart::create(array_merge(
-            $request->only([
-            'product_id',
-            'quantity'
-        ]), [
-            'user_id' => $request->user()->id
-            ]
-        ));
-        //güncel sepet döner
+        // Sepette aynı ürün var mı 
+        $cart = Cart::where('product_id', $request->product_id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if ($cart) {
+            $cart->quantity += $request->quantity;
+            $cart->save();
+        } else {
+            $cart = Cart::create(array_merge(
+                $request->only(['product_id', 'quantity']),
+                ['user_id' => $request->user()->id]
+            ));
+        }
         return $this->getUserCart($request->user()->id, 'Ürün sepete eklendi');
     }
     public function update(UpdateCartRequest $request)//sepet güncelleme
@@ -103,7 +108,20 @@ class CartController extends Controller
         $campaignDiscount = $this->calculateCampaignDiscount($cartItems);
         $finalTotal -= $campaignDiscount;
         $currency = $cartItems->first()->product->currency ?? 'TRY';
+        //kargo şirketi ve ücreti
+        $shippingCompany = ShippingCompany::find($request->input('shipping_company_id'));
+        $shippingPrice = $shippingCompany ? $shippingCompany->base_price : 0;
+        $shippingPrice += $shippingCompany ? $shippingCompany->shippingExtras()
+            ->where('city_id', $request->input('city_id'))
+            ->value('extra_price') ?? 0 : 0;
         
+        //25000 üzeri kargo bedava
+        if ($finalTotal > 25000) {
+            $shippingPrice = 0;
+        }
+
+        $finalTotal += $shippingPrice;
+
         //sipariş numarası oluşturma
         $orderNo = 'ORD-' . $userId . '-' . str_pad((string) now()->format('YmdHis'), 10, '0', STR_PAD_LEFT);
 
@@ -119,13 +137,15 @@ class CartController extends Controller
         ];
 
         // Önce pending sipariş kaydı oluştur
-        $order = DB::transaction(function () use ($userId, $orderNo, $currency, $finalTotal) {
+        $order = DB::transaction(function () use ($userId, $orderNo, $currency, $finalTotal, $shippingCompany) {
             return Order::create([
                 'user_id' => $userId,
                 'order_no' => $orderNo,
                 'total_price' => $finalTotal,
                 'currency' => $currency,
                 'status' => 'pending',
+                'shipping_company_id' => $shippingCompany ? $shippingCompany->id : null,
+                'shipping_price' => $shippingCompany->base_price
             ]);
         });
 
@@ -193,8 +213,11 @@ class CartController extends Controller
             'currency' => $currency,
             'discount' => $discount,
             'campaign_discount' => $campaignDiscount,
+            'shipping_company' => $shippingCompany ? $shippingCompany->name : null,
+            'shipping_price' => $shippingPrice,
             'message' => $discount > 0 ? 'İlk alışverişinize özel 100 TL indirim uygulandı!' : null,
-            'campaign_message' => $campaignDiscount > 0 ? '2 Al 1 Öde kampanyası uygulandı!' : null
+            'campaign_message' => $campaignDiscount > 0 ? '2 Al 1 Öde kampanyası uygulandı!' : null,
+            'final_price' => $finalTotal
         ]);
     }
     
@@ -210,7 +233,8 @@ class CartController extends Controller
     {
         return Cart::query()
             ->with(['product'])
-            ->where('user_id', $userId)->get();
+            ->where('user_id', $userId)
+            ->get();
     }
     //sepetteki ürünlerin toplam fiyatı
     private function calculateTotalPrice($cartItems)
@@ -244,7 +268,7 @@ class CartController extends Controller
 
         return ResponseBuilder::success([
             "items" => CartItemResource::collection($cartItems),
-            "total_price" => $total - $discount - $campaignDiscount,
+            "total_price" => ($total - ($discount  + $campaignDiscount)),
             "discount" => $discount,
             "campaign_discount" => $campaignDiscount,
             "currency" => $cartItems->first()->product->currency ?? 'TRY',
@@ -273,5 +297,4 @@ class CartController extends Controller
 
         return $discount;
     }
-
 }
