@@ -69,8 +69,8 @@
 
     <!-- Content -->
     <div class="content">
-      <p>Merhaba,</p>
-      <p>Sepetinizde yüksek tutarda ürün bulunuyor. Hemen alışverişinizi tamamlayın, fırsatları kaçırmayın!</p>
+      <p>Merhaba, {{ $user->name }}</p>
+      <p>Sepetinizde {{ $cart->subtotal }} tutarda ürün bulunuyor. Hemen alışverişinizi tamamlayın, fırsatları kaçırmayın!</p>
       <a href="https://www.orneksite.com/sepetim" class="btn">Sepete Dön</a>
     </div>
 

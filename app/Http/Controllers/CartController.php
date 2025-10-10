@@ -18,6 +18,7 @@ use App\Models\OrderItem;
 use App\Jobs\SendPurchaseConfirmation;
 use App\Models\Campaign;
 use App\Models\ShippingCompany;
+use App\Models\Coupon;
 
 class CartController extends Controller
 {
@@ -108,6 +109,24 @@ class CartController extends Controller
         $campaignDiscount = $this->calculateCampaignDiscount($cartItems);
         $finalTotal -= $campaignDiscount;
         $currency = $cartItems->first()->product->currency ?? 'TRY';
+
+        //kupon indirimi
+        if ($request->filled('coupon_code')) {
+            $coupon = Coupon::where('code', $request->input('coupon_code'))->first();
+            if (!$coupon || !$coupon->isValid($userId)) {
+                return ResponseBuilder::error(null, 'Geçersiz kupon kodu', 422);
+            }
+            $finalTotal = $coupon->applyDiscount($finalTotal);
+            //kupon kullanıldığı için kullanım sayısını artırdık
+            $coupon->incrementUsage();
+            $coupon->incrementUserUsage($userId);
+            //kupon kullanım limiti dolduysa pasif yapalım
+                if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {
+                    $coupon->is_active = false;
+                    $coupon->save();
+                }
+        }
+
         //kargo şirketi ve ücreti
         $shippingCompany = ShippingCompany::find($request->input('shipping_company_id'));
         $shippingPrice = $shippingCompany ? $shippingCompany->base_price : 0;
