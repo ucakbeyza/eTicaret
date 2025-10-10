@@ -60,5 +60,13 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class);
     }
+    public function coupons()
+    {
+        return $this->hasMany(Coupon::class);
+    }
+    public function couponUsages()
+    {
+        return $this->hasMany(CouponUsage::class);
+    }
     
 }

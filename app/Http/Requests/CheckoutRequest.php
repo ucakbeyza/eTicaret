@@ -29,6 +29,7 @@ class CheckoutRequest extends FormRequest
             'shipping_company_id' => 'required|exists:shipping_companies,id',
             'address' => 'required|string|max:500',
             'city_id' => 'required|exists:cities,id',
+            'coupon_code' => 'nullable|string|exists:coupons,code',
         ];
     }
 
