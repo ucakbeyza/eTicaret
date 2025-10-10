@@ -6,8 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Campaign extends Model
 {
-    protected $fillable = ['name', 'product_id', 'type'];
-    // kampanya tek bir ürüne ait olabilir
+    protected $fillable = [
+        'name',
+        'product_id',
+        'type'
+    ];
+    
     public function product()
     {
         return $this->belongsTo(Product::class);

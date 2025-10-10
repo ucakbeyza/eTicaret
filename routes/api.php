@@ -9,6 +9,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderItemController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\ShippingCompanyController;
+use App\Http\Controllers\CouponController;
 
 Route::post('/register', [AuthController::class, 'register']);
 
@@ -56,5 +57,8 @@ Route::get('/cities/{id}', [CityController::class, 'index']);
 
 Route::get('/shipping-companies', [ShippingCompanyController::class, 'index']);
 
-
-
+Route::get('/coupons', [CouponController::class, 'index']);
+Route::get('/coupons/{id}', [CouponController::class, 'show']);
+Route::post('/coupons/create', [CouponController::class, 'create']);
+Route::post('/coupons/update/{id}', [CouponController::class, 'update']);
+Route::post('/coupons/delete', [CouponController::class, 'delete']);
