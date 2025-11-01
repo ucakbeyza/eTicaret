@@ -22,7 +22,7 @@ class DeleteCouponRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => 'required|exists:coupons,id',
+            'coupon_id' => 'required|exists:coupons,id',
         ];
     }
 }
