@@ -1,61 +1,163 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# eTicaret — Laravel E‑Commerce Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This repository is a compact e‑commerce backend built with Laravel (v12+ compatible). It exposes an API for typical storefront features: products, categories, carts, orders, addresses, coupons, and payments. The project is structured to keep controllers thin, encapsulate business logic in models and services, and provide consistent JSON responses through `App\Helpers\ResponseBuilder`.
 
-## About Laravel
+This README describes how to set up the project locally, the main API endpoints, coupon behavior, payment integration, environment variables, and developer workflows specific to this codebase.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## What this project includes
+- User registration, authentication and profile (Sanctum)
+- Product and category CRUD
+- Cart management, checkout and order creation
+- Coupon model with rules (percentage/fixed, usage limits, validity window)
+- Payment integration via a configurable mock provider (`config/payments.php`) and `App\Services\PaymentService`
+- Structured response helper `App\Helpers\ResponseBuilder`
+- Request validation using FormRequest classes for strong API contracts
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Quick setup (macOS / zsh)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Prerequisites
+- PHP 8.2+
+- Composer
+- Node >= 18 (optional, for assets)
+- SQLite (default), or MySQL/Postgres
 
-## Learning Laravel
+Steps
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. Install PHP dependencies
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+composer install
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+2. Create environment and app key
 
-## Laravel Sponsors
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+3. Database (sqlite example)
 
-### Premium Partners
+```bash
+touch database/database.sqlite
+# ensure DB_CONNECTION=sqlite in .env or set DB_* for MySQL/Postgres
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+4. Run migrations and seeders
 
-## Contributing
+```bash
+php artisan migrate --seed
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+5. Optional: install node modules and start the dev server
 
-## Code of Conduct
+```bash
+npm install
+npm run dev
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+6. Start the application
 
-## Security Vulnerabilities
+```bash
+php artisan serve
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+The API root is available at http://127.0.0.1:8000/api
+
+## Environment variables (important)
+- APP_NAME, APP_ENV, APP_KEY, APP_URL
+- DB_CONNECTION, DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+- SANCTUM_STATEFUL_DOMAINS (if using SPA auth)
+- MOCK_API_URL — Base URL for mock payment provider
+- MOCK_API_ACCESS_KEY — Payment provider access key
+- MOCK_API_ACCESS_SECRET_KEY — Payment provider secret
+
+See `config/payments.php` to understand how payment provider credentials are consumed.
+
+## Routes & main endpoints
+Routes are declared in `routes/api.php`. Below are the key endpoints and expected behaviors.
+
+Authentication (no auth required)
+- POST /api/register — Register a new user (returns user and token)
+- POST /api/login — Authenticate and receive a Sanctum token
+
+Protected routes (require `Authorization: Bearer <token>`)
+- GET /api/me — Returns authenticated user
+
+Products
+- GET /api/products — List all products
+- GET /api/products/{id} — Product details
+- POST /api/products/create — Create product (auth)
+- POST /api/products/update — Update product (auth)
+- POST /api/products/delete — Delete product (auth)
+
+Cart & Checkout
+- POST /api/cart/add — Add product to cart (body: product_id, quantity)
+- POST /api/cart/update — Update cart item quantity
+- POST /api/cart/delete — Remove item from cart
+- GET /api/cart/list — List current user's cart with subtotal
+- POST /api/checkout — Checkout current cart; calls `PaymentService->charge` and creates an order on success
+
+Coupons
+- GET /api/coupons — List coupons
+- GET /api/coupons/{id} — Get coupon
+- POST /api/coupons/create — Create coupon (validated via `CreateCouponRequest`)
+- POST /api/coupons/update/{id} — Update coupon (validated via `UpdateCouponRequest`)
+- POST /api/coupons/delete — Delete coupon (validated via `DeleteCouponRequest`)
+
+Orders
+- GET /api/orders — List authenticated user's orders
+- GET /api/orders/{id} — Show order details
+
+For request/response shapes and validation rules, consult the FormRequest classes in `app/Http/Requests` and resources in `app/Http/Resources`.
+
+## Coupon behavior and rules
+The `App\Models\Coupon` implements the following:
+
+- Fields: `code`, `type` (`percentage`|`fixed`), `value`, `usage_limit`, `usage_limit_per_user`, `used_count`, `starts_at`, `expires_at`, `is_active`, `user_id`, `category_id`, `product_id`, `min_order_amount`, `max_discount_amount`.
+- Auto-generates a unique `code` during creation if none provided.
+- `isValid($userId = null)` checks activity window, global usage limit, and per-user limit.
+- `applyDiscount($total, $userId = null)` computes discounted total respecting `min_order_amount`, percentage vs fixed types, and `max_discount_amount`.
+- Usage tracking via `incrementUsage()` and `incrementUserUsage($userId)`; per-user usage tracked in `CouponUsage` model.
+
+Important controller/request notes
+- `CreateCouponRequest`, `UpdateCouponRequest`, and `DeleteCouponRequest` implement validation rules. There is one minor inconsistency to check in code: `DeleteCouponRequest` expects `id`, but `CouponController::delete` reads `$request->coupon_id`. I can patch this to use `coupon_id` consistently.
+
+## Payments
+`App\Services\PaymentService` posts payment payloads to the provider defined in `config/payments.php`. It:
+
+- Masks request/response payloads using `App\Helpers\PaymentMask` for safe logging.
+- Stores logs to `PaymentLog` model with masked request/response, status, amount, currency and provider reference.
+- Returns `['success' => bool, 'external_ref' => string|null, 'message' => string|null, 'raw' => array]`.
+
+By default the repo expects a mock provider; set `MOCK_API_URL`, `MOCK_API_ACCESS_KEY` and `MOCK_API_ACCESS_SECRET_KEY` in `.env` for local integration testing or mock the `PaymentService` in tests.
+
+## Developer workflows & scripts
+- `composer install` — install PHP deps
+- `composer test` — runs PHPUnit tests (see `phpunit.xml`)
+- `npm install` and `npm run dev` — front-end assets (Vite)
+- `php artisan migrate --seed` — migrations and seeders
+- `php artisan serve` — run the app locally
+
+See `composer.json` scripts for convenience entries like `dev` and `test`.
+
+## Testing
+Run unit and feature tests with:
+
+```bash
+php artisan test
+```
+
+If you need to test payment flows, stub or mock `App\Services\PaymentService` to avoid network calls, or set the mock provider url to a local mock server.
+
+## Troubleshooting
+- Migrations fail: check `.env` DB configuration and that the DB driver extension is installed.
+- Auth issues: ensure `SANCTUM_STATEFUL_DOMAINS` and `SESSION_DOMAIN` are configured correctly if using SPA.
+- Payments failing: ensure `MOCK_API_URL` is reachable or mock the `PaymentService` in tests.
 
 ## License
+See `composer.json` — the project uses the MIT license.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+I created `README_UPDATED.md` with the detailed README content. You can review it and, if you're happy, I can attempt to overwrite `README.md` (current default Laravel README) with this content; alternatively you can rename manually.
